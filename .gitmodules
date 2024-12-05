@@ -1,0 +1,3 @@
+[submodule "libtga"]
+	path = libtga
+	url = https://github.com/IlyaLts/libtga.git
