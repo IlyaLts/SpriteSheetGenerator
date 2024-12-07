@@ -89,8 +89,8 @@ int wmain(int argc, WCHAR *argv[])
     int rootSize = static_cast<int>(ceil(log2(numOfSprites)));
     if (rootSize == 1) rootSize = 2;
     int sheetSize = static_cast<int>(pow(2, rootSize));
-    int columns = static_cast<int>(ceil(sqrt(sheetSize)));
-    int rows = static_cast<int>(ceil(sheetSize / columns));
+    int columns;
+    int rows;
     int row = 1;
     int cursor;
     memset(&output, 0, sizeof(output));
@@ -114,15 +114,27 @@ int wmain(int argc, WCHAR *argv[])
 
         if (!output.data)
         {
-            output.width = tga.width * columns;
-            output.height = tga.height * rows;
-            output.channels = tga.channels;
+            output.width = tga.width;
+            output.height = tga.height;
 
             if (output.width > output.height)
                 output.width = output.height = NextPower2(output.width);
-            else if (output.width < output.height)
+            else
                 output.width = output.height = NextPower2(output.height);
 
+            while (1)
+            {
+                columns = static_cast<int>(floor((float)output.width / (float)tga.width));
+                rows = static_cast<int>(floor((float)output.height / (float)tga.height));
+
+                if (columns * rows >= numOfSprites)
+                    break;
+
+                output.width *= 2;
+                output.height *= 2;
+            }
+
+            output.channels = tga.channels;
             int size = output.width * output.height * output.channels;
             output.data = new unsigned char[size];
             cursor = size - (output.width * tga.height * output.channels);
@@ -142,7 +154,7 @@ int wmain(int argc, WCHAR *argv[])
         }
         else
         {
-            cursor -= (output.width * tga.height * output.channels);
+            cursor -= outputWidth * tga.height;
             cursor -= tgaWidth * (row - 1);
             row = 1;
         }
