@@ -86,12 +86,9 @@ int wmain(int argc, WCHAR *argv[])
     wchar_t path[1024];
     tga_type mode = static_cast<tga_type>(_wtoi(argv[2]));
     int numOfSprites = GetNumOfSprites(argv[1]);
-    int rootSize = static_cast<int>(ceil(log2(numOfSprites)));
-    if (rootSize == 1) rootSize = 2;
-    int sheetSize = static_cast<int>(pow(2, rootSize));
     int columns;
     int rows;
-    int row = 1;
+    int currentColumn = 1;
     int cursor;
     memset(&output, 0, sizeof(output));
 
@@ -114,18 +111,12 @@ int wmain(int argc, WCHAR *argv[])
 
         if (!output.data)
         {
-            output.width = tga.width;
-            output.height = tga.height;
-
-            if (output.width > output.height)
-                output.width = output.height = NextPower2(output.width);
-            else
-                output.width = output.height = NextPower2(output.height);
+            output.width = output.height = NextPower2(tga.width > tga.height ? tga.width : tga.height);
 
             while (1)
             {
-                columns = static_cast<int>(floor((float)output.width / (float)tga.width));
-                rows = static_cast<int>(floor((float)output.height / (float)tga.height));
+                columns = static_cast<int>(floor(static_cast<float>(output.width) / static_cast<float>(tga.width)));
+                rows = static_cast<int>(floor(static_cast<float>(output.height) / static_cast<float>(tga.height)));
 
                 if (columns * rows >= numOfSprites)
                     break;
@@ -147,16 +138,16 @@ int wmain(int argc, WCHAR *argv[])
         for (unsigned int j = 0; j < tga.height; j++)
             memcpy(&output.data[cursor + outputWidth * j], &tga.data[tgaWidth * j], tgaWidth);
 
-        if (row < columns)
+        if (currentColumn < columns)
         {
             cursor += tgaWidth;
-            row++;
+            currentColumn++;
         }
         else
         {
             cursor -= outputWidth * tga.height;
-            cursor -= tgaWidth * (row - 1);
-            row = 1;
+            cursor -= tgaWidth * (currentColumn - 1);
+            currentColumn = 1;
         }
     }
 
