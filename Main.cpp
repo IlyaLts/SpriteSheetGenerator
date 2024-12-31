@@ -28,6 +28,8 @@
 #include <clocale>
 #include "libtga/tga.h"
 
+#define LTC_VERSION 1
+
 int GetNumOfSprites(const wchar_t *name)
 {
     int sprites = 0;
@@ -64,7 +66,7 @@ int wmain(int argc, WCHAR *argv[])
 {
     setlocale(LC_ALL, ".UTF8");
 
-    if (argc != 3)
+    if (argc < 3)
     {
         wprintf(L"Usage: %s <tga sprite name> <format>\n\n"
                 L"Formats:\n"
@@ -84,6 +86,7 @@ int wmain(int argc, WCHAR *argv[])
     
     tga_image output;
     wchar_t path[1024];
+    wchar_t path2[1024];
     tga_type mode = static_cast<tga_type>(_wtoi(argv[2]));
     int numOfSprites = GetNumOfSprites(argv[1]);
     int columns;
@@ -95,6 +98,15 @@ int wmain(int argc, WCHAR *argv[])
     if (!numOfSprites)
     {
         wprintf(L"%s - couldn't find sprites.\n", argv[1]);
+        return -1;
+    }
+
+    wsprintf(path2, L"%s.tga.ltc", argv[1]);
+    FILE *mf;
+    _wfopen_s(&mf, path2, L"wb");
+    if (!mf)
+    {
+        wprintf(L"%s - couldn't create UV map file.\n", path2);
         return -1;
     }
 
@@ -111,6 +123,10 @@ int wmain(int argc, WCHAR *argv[])
 
         if (!output.data)
         {
+            int version = LTC_VERSION;
+            fwrite(&version, sizeof(version), 1, mf);
+            fwrite(&numOfSprites, sizeof(numOfSprites), 1, mf);
+
             output.width = output.height = NextPower2(tga.width > tga.height ? tga.width : tga.height);
 
             while (1)
@@ -138,6 +154,23 @@ int wmain(int argc, WCHAR *argv[])
         for (unsigned int j = 0; j < tga.height; j++)
             memcpy(&output.data[cursor + outputWidth * j], &tga.data[tgaWidth * j], tgaWidth);
 
+        int currentPixel = cursor / output.channels;
+
+        int x1 = (currentPixel + output.width * (tga.height - 1)) % output.width;
+        int y2 = static_cast<int>(ceil(static_cast<float>(((output.width * output.height) - currentPixel)) / output.width));
+        int x2 = x1 + tga.width;
+        int y1 = y2 - tga.height;
+
+        float u1 = static_cast<float>(x1) / output.width;
+        float v1 = static_cast<float>(y1) / output.height;
+        float u2 = static_cast<float>(x2) / output.width;
+        float v2 = static_cast<float>(y2) / output.height;
+
+        fwrite(&u1, sizeof(u1), 1, mf);
+        fwrite(&v1, sizeof(v1), 1, mf);
+        fwrite(&u2, sizeof(u1), 1, mf);
+        fwrite(&v2, sizeof(v2), 1, mf);
+
         if (currentColumn < columns)
         {
             cursor += tgaWidth;
@@ -150,6 +183,8 @@ int wmain(int argc, WCHAR *argv[])
             currentColumn = 1;
         }
     }
+
+    fclose(mf);
 
     wsprintf(path, L"%s.tga", argv[1]);
 
