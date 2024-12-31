@@ -1,9 +1,9 @@
-Sprite Converter
+Sprite Sheet Generator
 ===================
-Converts single-file sprites to sprite sheets.
+A custom tool for generating sprite sheets from individual sprites.
 
 ### Usage
-```SpriteConverter ./SpriteName <format>```
+```ssg ./SpriteName <format>```
 
 *(Sprites must be named with a numeric postfix (e.g., Sprite0))*
 
@@ -29,4 +29,4 @@ Using "0" and "5" formats will fail if the image has over 256 colors.
 Buildable with Visual Studio.
 
 ## License
-SpriteConverter is licensed under the MIT license, see LICENSE.txt for more information.
+Sprite Sheet Generator is licensed under the MIT license, see LICENSE.txt for more information.
